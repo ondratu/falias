@@ -97,10 +97,14 @@ def sql_init(self, dsn):
     self.memory = match.group('memory')
     self.charset = match.group('charset') or "utf-8"
 #enddef
-    
+
 def sql_reconnect(self):
     if self.dbfile:
-        return sqlite3.connect(self.dbfile)
+        try:
+            return sqlite3.connect(self.dbfile)
+        except sqlite3.OperationalError as e:
+            e.args = e.args + (self.dbfile,)
+            raise e
     else:
         return sqlite3.connect(":memory:")
     # PRAGMA encoding = "UTF-8"; # UTF-8 | UTF-16 | UTF-16le | UTF-16be
