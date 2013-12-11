@@ -7,6 +7,8 @@ from MySQLdb.connections import Connection
 
 import re
 
+from util import islistable, isnumber
+
 class BaseCursor(cursors.BaseCursor):
     def __init__(self, connection):
         cursors.BaseCursor.__init__(self, connection)
@@ -14,17 +16,19 @@ class BaseCursor(cursors.BaseCursor):
     #enddef
 
     def tosql(self, arg, charset):
-        if arg is None:                                         # null
+        if arg is None:                                     # null
             arg = "NULL"
-        elif isinstance(arg, float) or isinstance(arg, int) or isinstance(arg, long):
-            pass                                                # num 
+        elif isnumber(arg):                                 # float, int, long
+            pass                                            # num 
         elif isinstance(arg, str) or isinstance(arg, unicode):  # str
             if isinstance(arg, unicode):
                 arg = arg.encode(charset)
             arg = "'%s'" % self.connection.escape_string(arg)
-        elif isinstance(arg, bool):                             # bool
+        elif isinstance(arg, bool):                         # bool
             arg = 1 if arg else 0
-        else:                                                   #
+        elif islistable(arg):                               # list, tuple, set
+            arg = '(' + ','.join( self.tosql(a, charset) for a in arg )  + ')'
+        else:                                               #
             raise TypeError('Unsuported type')
         #endif
         return arg

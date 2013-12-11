@@ -1,6 +1,8 @@
 
 import re, sqlite3
 
+from util import islistable, isnumber
+
 class Cursor(sqlite3.Cursor):
     def __init__(self, connection):
         sqlite3.Cursor.__init__(self, connection)
@@ -12,19 +14,21 @@ class Cursor(sqlite3.Cursor):
     #enddef
 
     def tosql(self, arg, charset):
-        if arg is None:                                         # null
+        if arg is None:                                     # null
             arg = "NULL"
-        elif isinstance(arg, float) or isinstance(arg, int) or isinstance(arg, long):
-            pass                                                # num
+        elif isnumber(arg):                                 # float, int, long
+            pass                                            # num
         elif isinstance(arg, str) or isinstance(arg, unicode):  # str & unicode
             if isinstance(arg, unicode):
                 arg = arg.encode(charset)
             #arg = arg.replace("'", "\\'").replace('"', '\\"')
             arg = arg.replace("'", "''")
             arg = "'%s'" % arg
-        elif isinstance(arg, bool):                             # bool
+        elif isinstance(arg, bool):                         # bool
             arg = 1 if arg else 0
-        else:                                                   #
+        elif islistable(arg):                               # list, tuple, set
+            arg = '(' + ','.join( self.tosql(a, charset) for a in arg )  + ')'
+        else:                                               #
             raise TypeError('Unsuported type')
         #endif
         return arg
