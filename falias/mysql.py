@@ -149,27 +149,3 @@ def sql_disconnect(self):
 def sql_transaction(self, logger = None):
     self.reconnect()
     return Transaction(self.connection, logger)
-
-def mysql_parse_DSN(dsn):
-    """
-    Parsing DSN - The Data Source Name
-    example: mysql://user:passwd@host:port/database
-    """
-
-    match = re_mysql_DSN.match(dsn.strip())
-    if match is None:
-        raise RuntimeError(
-                'DSN must be look like mysql://user:passwd@host:port/database::charset')
-
-    user, passwd, host, port, db, charset = match.groups()
-    retval = {}
-    retval["host"] = host[1:] if not host is None else 'localhost'
-    retval["port"] = int(port[1:]) if not port is None else 3306
-    retval["db"] = db
-    retval["charset"] = charset[2:] if not charset is None else 'utf8'
-    retval["user"] = user
-    if not passwd is None:
-        retval["passwd"] = passwd[1:]
-
-    return retval
-#enddef
