@@ -10,7 +10,7 @@ re_dsn = re.compile("""smtp://          # driver
                                 (:(?P<passwd>[\w\.]+))?@)?
                                 (?P<host>[\w\.]+)?
                                 (:(?P<port>[0-9]+))?
-                                /(?P<sender>[\w\.]+@[\w\.]+)?
+                                /(?P<sender>[\w\.\-]+@[\w\.\-]+)?
                                 (::(?P<charset>\w+))?
                                 
                     """, re.X)
