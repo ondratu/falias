@@ -4,6 +4,11 @@ def uni(text):
         return unicode(text, encoding = 'utf-8')
     return unicode(text)
 
+def nint(val):
+    if val is None:
+        return None
+    return int(val)
+
 def islistable(arg):
     return isinstance(arg, list) or isinstance(arg, tuple) or isinstance(arg, set)
 
