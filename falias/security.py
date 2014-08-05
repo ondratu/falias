@@ -1,4 +1,13 @@
 from hashlib import sha1, md5
+from random import seed, randrange
+
+seed()
+
+cchars  = './'
+cchars += ''.join(chr(c) for c in xrange(ord('a'),ord('z')))
+cchars += ''.join(chr(c) for c in xrange(ord('A'),ord('Z')))
+cchars += ''.join(chr(c) for c in xrange(ord('0'),ord('9')))
+clen = len(cchars)
 
 def smartsalt(text):
     ln = len(text)
@@ -18,3 +27,17 @@ def sha1_sdigest(text):
 
 def md5_sdigest(text):
     return md5(smartsalt(text)).hexdigest()
+
+def crypt_md5_salt():
+    """ Return random md5 salt for crypt.crypt function. """
+    return '$1$' + \
+            cchars[randrange(clen)] + \
+            cchars[randrange(clen)] + \
+            cchars[randrange(clen)] + \
+            cchars[randrange(clen)] + \
+            cchars[randrange(clen)] + \
+            cchars[randrange(clen)] + \
+            cchars[randrange(clen)] + \
+            cchars[randrange(clen)] + \
+            '$'
+#enddef

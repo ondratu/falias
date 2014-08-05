@@ -3,6 +3,9 @@ import re, sqlite3
 
 from util import islistable, isnumber
 
+def regexp(pattern, string):
+    return True if re.search(pattern, string) else False
+
 class Cursor(sqlite3.Cursor):
     def __init__(self, connection):
         sqlite3.Cursor.__init__(self, connection)
@@ -89,7 +92,6 @@ class Transaction():
     #enddef
 
 #endclass
-
 
 re_dsn = re.compile("\w+:((?P<memory>memory)|/(?P<dbfile>[\w\.\/]+))(::)?(?P<charset>[\w\-]+)?")
 
