@@ -4,7 +4,7 @@ import re, sqlite3
 from util import islistable, isnumber
 
 def regexp(pattern, string):
-    return True if re.search(pattern, string) else False
+    return True if re.search(pattern, (string if not string is None else '')) else False
 
 class Cursor(sqlite3.Cursor):
     def __init__(self, connection):
@@ -107,13 +107,16 @@ def sql_init(self, dsn):
 def sql_reconnect(self):
     if self.dbfile:
         try:
-            return sqlite3.connect(self.dbfile)
+            conn = sqlite3.connect(self.dbfile)
         except sqlite3.OperationalError as e:
             e.args = e.args + (self.dbfile,)
             raise e
     else:
-        return sqlite3.connect(":memory:")
+        conn = sqlite3.connect(":memory:")
+
     # PRAGMA encoding = "UTF-8"; # UTF-8 | UTF-16 | UTF-16le | UTF-16be
+    conn.execute("PRAGMA foreign_keys = ON")    # eneble foreign keys
+    return conn
 #enddef
 
 def sql_disconnect(self):
