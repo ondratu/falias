@@ -56,6 +56,24 @@ class Cursor(sqlite3.Cursor):
     #enddef
 #endclass
 
+class DictCursor(Cursor):
+    def __init__(self, connection):
+        super(DictCursor, self).__init__(connection)
+
+    def fetchone(self):
+        row = super(DictCursor, self).fetchone()
+        return sqlite3.Row(self, row) if row else row
+
+    def fetchall(self):
+        rows = super(DictCursor, self).fetchall()
+        return list(sqlite3.Row(self, row) for row in rows)
+
+    def fetchmany(self, size = -1):
+        size = size if size > -1 else self.arraysize
+        rows = super(DictCursor, self).fetchmany(size)
+        return list(sqlite3.Row(self, row) for row in rows)
+#endclass
+
 class Transaction():
     """  Transaction connection class  """
 
