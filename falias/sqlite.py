@@ -87,6 +87,7 @@ class Transaction():
     def cursor(self, cursorclass = Cursor):
         c = cursorclass(self.connection)
         c.logger = self.logger
+        c.transaction = self
         return c
     #enddef
 
