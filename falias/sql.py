@@ -22,4 +22,5 @@ class Sql:
         self.reconnect = MethodType (m.sql_reconnect, self)
         self.disconnect = MethodType (m.sql_disconnect, self)
         self.transaction = MethodType (m.sql_transaction, self)
-#enddef
+
+        self.__str__ = MethodType(m.__str__, self)

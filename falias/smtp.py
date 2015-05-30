@@ -12,7 +12,6 @@ re_dsn = re.compile("""smtp://          # driver
                                 (:(?P<port>[0-9]+))?
                                 /(?P<sender>[\w\.\-]+@[\w\.\-]+)?
                                 (::(?P<charset>\w+))?
-                                
                     """, re.X)
 
 class Smtp:
@@ -30,6 +29,13 @@ class Smtp:
 
         self.xmailer = 'Falias (http://falias.zeropage.cz)'
     #enddef
+
+    def __str__(self):
+        return "smtp://%s%s%s%s:%d/%s::%s" % \
+                (self.user or '', self.passwd or '',
+                 '@' if self.user or self.passwd else '', self.host, self.port,
+                 self.sender, self.charset)
+
 
     def send_email_txt(self, subject, recipient, body, logger = None, **kwargs):
         msg = MIMEText(body)

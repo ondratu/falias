@@ -45,9 +45,9 @@ class BaseCursor(cursors.BaseCursor):
                 _args.append(self.tosql(arg, charset))
             args = tuple(_args)
         else:
-            args = self.tosql(args, charset)            
+            args = self.tosql(args, charset)
         #endif
-        
+
         sql = query % args
         if not self.logger is None:
             self.logger("SQL: \33[0;32m%s\33[0m" % sql)
@@ -122,7 +122,7 @@ def sql_init(self, dsn):
     match = re_dsn.match(dsn)
     if not match:
         raise RuntimeError("Bad MySQL Data Source Name `%s`", dsn)
-   
+
     self.kwargs = {
         'host'    : match.group('host') or "localhost",
         'port'    : int(match.group('port') or 3306),
@@ -130,7 +130,7 @@ def sql_init(self, dsn):
         'charset' : match.group('charset') or "utf8",
         'user'    : match.group('user')
     }
-    
+
     passwd = match.group('passwd')
     if passwd:
         self.kwargs['passwd'] = passwd
@@ -140,7 +140,6 @@ def sql_init(self, dsn):
 
 def sql_reconnect(self):
     if self.connection is None:
-        print str(self.kwargs)
         self.connection  = Connection(**self.kwargs)
 
 def sql_disconnect(self):
@@ -149,3 +148,9 @@ def sql_disconnect(self):
 def sql_transaction(self, logger = None):
     self.reconnect()
     return Transaction(self.connection, logger)
+
+def __str__(self):
+    return "mysql://%s:%s@%s:%d/%s::%s" % \
+        (self.kwargs['user'], self.kwargs.get('passwd', ''),
+         self.kwargs['host'], self.kwargs['port'], self.kwargs['db'],
+         self.kwargs['charset'])

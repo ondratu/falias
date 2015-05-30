@@ -112,7 +112,10 @@ class Transaction():
 
 #endclass
 
-re_dsn = re.compile("\w+:((?P<memory>memory)|/(?P<dbfile>[\w\.\/]+))(::)?(?P<charset>[\w\-]+)?")
+re_dsn = re.compile("""\w+:       # driver
+                        ((?P<memory>memory)|/(?P<dbfile>[\w\.\/]+))
+                        (::)?(?P<charset>[\w\-]+)?
+                    """, re.X)
 
 def sql_init(self, dsn):
     match = re_dsn.match(dsn)
@@ -143,3 +146,6 @@ def sql_disconnect(self):
 
 def sql_transaction(self, logger = None):
     return Transaction(self.reconnect(), logger)
+
+def __str__(self):
+    return "sqlite:/%s::%s" % (self.dbfile or 'memory', self.charset)
