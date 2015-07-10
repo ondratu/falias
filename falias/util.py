@@ -28,6 +28,18 @@ def uniq(l):
     return n
 #enddef
 
+def dict_difference(one, two):
+    """ Return new dictionary, with pairs if key from one is not in two,
+        or if value of key in one is another then value of key in two.
+    """
+    class NotFound : pass
+    rv = dict()
+    for key, val in one.items():
+        if val != two.get(key, NotFound()):
+            rv[okey] = oval
+    return rv
+# end def dict_difference
+
 class Object(object):
     """ Simple object with __contains__ method, so 'prop' in obj will work """
     def __contains__(self, key):
