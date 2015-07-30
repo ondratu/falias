@@ -1,5 +1,6 @@
 
 from email.MIMEText import MIMEText
+from email.MIMEMultipart import MIMEMultipart
 from smtplib import SMTP, SMTPException
 
 import re
@@ -53,7 +54,7 @@ class Smtp:
         elif self.xmailer:
             msg['X-Mailer'] = self.xmailer
 
-        if not logger is None:
+        if logger:
             logger("SMTP: \33[0;32mSub:%s, From:%s, To:%s\33[0m" % \
                             (msg['Subject'], msg['From'], msg['To']))
 
@@ -61,25 +62,73 @@ class Smtp:
         try:
             smtp.connect(self.host, self.port)
 
-            print self.user, self.passwd
-            if not self.user is None:
+            if self.user:
                 smtp.login(self.user, self.passwd)
         except SMTPException as e:
             smtp.close()
-            if not logger is None:
+            if logger:
                 logger("SMTP: \33[3;33mConnection failed\33[0m %s" % str(e))
             raise e
 
         try:
             rv = smtp.sendmail(msg['From'], msg['To'], msg.as_string())
         except SMTPException as e:
-            if not logger is None:
+            if logger:
                 logger("SMTP: \33[3;33mSendig email failed\33[0m %s" % str(e))
             raise e
         finally:
             smtp.close()
     #enddef
 
+    def send_email_alternative(self, subject, recipient, txt_body,  html_body,
+                               logger = None, **kwargs):
+        msg = MIMEMultipart('alternative')
+        msg['Subject']  = subject
+        msg['From']     = kwargs['sender'] if 'sender' in kwargs else self.sender
+        msg['To']       = recipient
+
+        # headers
+        if 'reply' in kwargs:
+            msg['Reply-To'] = kwargs['reply']
+        if 'xmailer' in kwargs:
+            msg['X-Mailer'] = kwargs['xmailer']
+        elif self.xmailer:
+            msg['X-Mailer'] = self.xmailer
+
+        # body
+        part1 = MIMEText(txt_body, 'plain')
+        part1.set_charset(self.charset)
+        part2 = MIMEText(html_body, 'html')
+        part2.set_charset(self.charset)
+
+        msg.attach(part1)
+        msg.attach(part2)
+
+        if logger:
+            logger("SMTP: \33[0;32mSub:%s, From:%s, To:%s\33[0m" % \
+                            (msg['Subject'], msg['From'], msg['To']))
+
+        smtp = SMTP()
+        try:
+            smtp.connect(self.host, self.port)
+
+            if self.user:
+                smtp.login(self.user, self.passwd)
+        except SMTPException as e:
+            smtp.close()
+            if logger:
+                logger("SMTP: \33[3;33mConnection failed\33[0m %s" % str(e))
+            raise e
+
+        try:
+            rv = smtp.sendmail(msg['From'], msg['To'], msg.as_string())
+        except SMTPException as e:
+            if logger:
+                logger("SMTP: \33[3;33mSendig email failed\33[0m %s" % str(e))
+            raise e
+        finally:
+            smtp.close()
+    #enddef
 #endclass
 
 
