@@ -1,6 +1,14 @@
 
-from email.MIMEText import MIMEText
-from email.MIMEMultipart import MIMEMultipart
+from sys import version_info
+
+if version_info[0] < 3:         # python 2.x
+    from email.MIMEText import MIMEText
+    from email.MIMEMultipart import MIMEMultipart
+
+else:                           # python 3.x
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+
 from smtplib import SMTP, SMTPException
 
 import re
