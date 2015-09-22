@@ -10,6 +10,7 @@ else:                           # python 3.x
     from email.mime.multipart import MIMEMultipart
 
 from smtplib import SMTP, SMTPException
+from time import strftime, localtime
 
 import re
 
@@ -27,7 +28,7 @@ class Smtp:
     def __init__(self, dsn):
         match = re_dsn.match(dsn)
         if not match:
-            raise RuntimeError("Bad SMTP Data Source Name `%s`", dsn)
+            raise RuntimeError("Bad SMTP Data Source Name `%s`" % dsn)
 
         self.host   = match.group('host') or "localhost"
         self.port   = int(match.group('port') or 25)
@@ -53,14 +54,13 @@ class Smtp:
         msg['Subject']  = subject
         msg['From']     = kwargs['sender'] if 'sender' in kwargs else self.sender
         msg['To']       = recipient
+        msg['Date']     = strftime("%a, %d %b %Y %X %z", localtime())
 
         # headers
         if 'reply' in kwargs:
             msg['Reply-To'] = kwargs['reply']
-        if 'xmailer' in kwargs:
-            msg['X-Mailer'] = kwargs['xmailer']
-        elif self.xmailer:
-            msg['X-Mailer'] = self.xmailer
+
+        msg['X-Mailer'] = kwargs.get('xmailer', self.xmailer)
 
         if logger:
             logger("SMTP: \33[0;32mSub:%s, From:%s, To:%s\33[0m" % \
@@ -94,14 +94,12 @@ class Smtp:
         msg['Subject']  = subject
         msg['From']     = kwargs['sender'] if 'sender' in kwargs else self.sender
         msg['To']       = recipient
+        msg['Date']     = strftime("%a, %d %b %Y %X %z", localtime())
 
         # headers
         if 'reply' in kwargs:
             msg['Reply-To'] = kwargs['reply']
-        if 'xmailer' in kwargs:
-            msg['X-Mailer'] = kwargs['xmailer']
-        elif self.xmailer:
-            msg['X-Mailer'] = self.xmailer
+        msg['X-Mailer'] = kwargs.get('xmailer', self.xmailer)
 
         # body
         part1 = MIMEText(txt_body, 'plain')
