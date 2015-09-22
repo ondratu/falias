@@ -116,6 +116,21 @@ class install_html(install_data):
         self.data_files = find_data_files(self.html_temp, 'share/doc/poorwsgi/html')
         install_data.run(self)
 
+class PyTest(Command):
+    user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
+
+    def initialize_options(self):
+        self.pytest_args = []
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        print (self.pytest_args)
+        import pytest
+        errno = pytest.main(self.pytest_args)
+        raise SystemExit(errno)
+
 
 def _setup(**kwargs):
     #if version_info[0] == 2 and version_info[1] < 7:
@@ -152,6 +167,7 @@ _setup(
             "Programming Language :: Python :: 3.4",
             "Topic :: Software Development :: Libraries :: Python Modules"
     ],
+    cmdclass            = {'test': PyTest},
     #cmdclass            = {'build_html': build_html,
     #                       'clean_html': clean_html,
     #                       'install_html': install_html},
