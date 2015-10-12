@@ -145,17 +145,11 @@ class PyTest(Command):
         raise SystemExit(errno)
 
 
-def _setup(**kwargs):
-    # if version_info[0] == 2 and version_info[1] < 7:
-    #    kwargs['install_requires'] = ['ordereddict >= 1.1']
-    setup(**kwargs)
-
-
 def doc():
     with open('README.rst', 'r') as readme:
         return readme.read().strip()
 
-setup_kwargs = {
+kwargs = {
     'name':             "Falias",
     'version':          __version__,
     'description':      "Lightweight support python library",
@@ -187,4 +181,4 @@ setup_kwargs = {
                          'install_html': install_html},
 }
 
-_setup(**setup_kwargs)
+setup(**kwargs)

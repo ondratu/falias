@@ -1,9 +1,12 @@
-
+"""
+ConfigParser wrapper for type conversation
+"""
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 
 from util import uni
 
-def smart_get(value, cls = unicode, delimiter = ','):
+
+def smart_get(value, cls=unicode, delimiter=','):
     """ Smart convert function, which convert value to cls. """
 
     if issubclass(cls, unicode):
@@ -23,31 +26,31 @@ def smart_get(value, cls = unicode, delimiter = ','):
         return cls()
     else:
         return cls(value)
-#enddef
 
 
 class Parser(ConfigParser):
     """ Wrapper to ConfigParser class, with better get method. """
 
-    def get(self, section, option, default = None, cls = unicode, delimiter = ','):
+    def get(self, section, option, default=None, cls=unicode, delimiter=','):
         """
         Method do the same as original get, but it can work with default value
         and use smart_get convert function to converting values to classes.
         """
 
-        #cls = cls if default is None else default.__class__
         default = None if default is None else str(default)
 
         try:
             value = ConfigParser.get(self, section, option).strip()
         except NoSectionError:
-            if default is None: raise
+            if default is None:
+                raise
             value = default
         except NoOptionError:
-            if default is None: raise
+            if default is None:
+                raise
             value = default
         return smart_get(value, cls, delimiter)
-#endclass
+
 
 class Options:
     """
@@ -56,10 +59,9 @@ class Options:
     """
 
     def __init__(self, options):
-        self.o = options;
+        self.o = options
 
-    def get(self, sec, key, default = None, cls = unicode, delimiter = ','):
-        #cls = cls if default is None else default.__class__
+    def get(self, sec, key, default=None, cls=unicode, delimiter=','):
         default = None if default is None else str(default)
 
         key = "%s_%s" % (sec, key)
@@ -67,4 +69,3 @@ class Options:
             raise RuntimeError('Envirnonment variable `%s` is not set' % key)
         value = self.o.get(key, default).strip()
         return smart_get(value, cls, delimiter)
-#endclass

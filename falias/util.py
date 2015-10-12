@@ -1,24 +1,31 @@
 def uni(text):
     """ automatic conversion from str to unicode with utf-8 encoding """
     if isinstance(text, str):
-        return unicode(text, encoding = 'utf-8')
+        return unicode(text, encoding='utf-8')
     return unicode(text)
+
 
 def nuni(val):
     if val is None:
         return None
     return uni(val)
 
+
 def nint(val):
     if val is None:
         return None
     return int(val)
 
+
 def islistable(arg):
-    return isinstance(arg, list) or isinstance(arg, tuple) or isinstance(arg, set)
+    return isinstance(arg, list) or isinstance(arg, tuple) or \
+        isinstance(arg, set)
+
 
 def isnumber(arg):
-    return isinstance(arg, float) or isinstance(arg, int) or isinstance(arg, long)
+    return isinstance(arg, float) or isinstance(arg, int) or \
+        isinstance(arg, long)
+
 
 def uniq(l):
     n = []
@@ -26,19 +33,20 @@ def uniq(l):
         if it not in n:
             n.append(it)
     return n
-#enddef
+
 
 def dict_difference(one, two):
     """ Return new dictionary, with pairs if key from one is not in two,
         or if value of key in one is another then value of key in two.
     """
-    class NotFound : pass
+    class NotFound:
+        pass
     rv = dict()
     for key, val in one.items():
         if val != two.get(key, NotFound()):
-            rv[okey] = oval
+            rv[key] = val
     return rv
-# end def dict_difference
+
 
 class Object(object):
     """ Simple object with __contains__ method, so 'prop' in obj will work """
@@ -63,10 +71,10 @@ class Size(object):
 class Paths(tuple):
     def __init__(self, value):
         if value:
-            super(tuple, self).__init__(uni(it.strip()) for it in uni(value).split(':'))
+            super(tuple, self).__init__(
+                uni(it.strip()) for it in uni(value).split(':'))
         else:
             super(tuple, self)
-
 
     def __str__(self):
         return ':'.join(self)
