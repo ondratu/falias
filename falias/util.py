@@ -1,38 +1,40 @@
+"""Support library for auto convert or check types."""
+
+
 def uni(text):
-    """ automatic conversion from str to unicode with utf-8 encoding """
+    """Automatic conversion from str to unicode with utf-8 encoding."""
     if isinstance(text, str):
         return unicode(text, encoding='utf-8')
     return unicode(text)
 
 
 def nuni(val):
+    """Return None or unicode."""
     if val is None:
         return None
     return uni(val)
 
 
 def nint(val):
+    """Return None or int."""
     if val is None:
         return None
     return int(val)
 
 
-def islistable(arg):
-    return isinstance(arg, list) or isinstance(arg, tuple) or \
-        isinstance(arg, set)
+def islistable(obj):
+    """Return True is obj is listable."""
+    return isinstance(obj, (list, tuple, set))
 
 
-def isnumber(arg):
-    return isinstance(arg, float) or isinstance(arg, int) or \
-        isinstance(arg, long)
+def isnumber(obj):
+    """Return True if obj is number."""
+    return isinstance(obj, (float, int, long))
 
 
 def uniq(l):
-    n = []
-    for it in l:
-        if it not in n:
-            n.append(it)
-    return n
+    """Return list without duplication."""
+    return list(set(l))
 
 
 def dict_difference(one, two):
@@ -65,10 +67,12 @@ class Size(object):
         return "%dx%d" % (self.width, self.height)
 
     def get(self):
+        """Return tuple of width and height."""
         return (self.width, self.height)
 
 
 class Paths(tuple):
+    """Paths object parse string and split it with colon character."""
     def __init__(self, value):
         if value:
             super(tuple, self).__init__(
