@@ -1,0 +1,7 @@
+{% set title = 'Falias' -%}
+
+{% set sections = load_rst("../LICENCE") %}
+
+{% from "_menu.jinja" import menu %}
+{% do menu[2].update({'selected': True}) %}
+{% include "_text.html" %}

@@ -1,25 +1,31 @@
-""" Falias library of some code wrappers.
+""" Falias is library of some code wrappers.
 
 This package contains these modules:
 
-sql     -
+falias.sql
+    Global sql wrapper for universal using depend on driver.
 
-mysql   -
+falias.mysql
+    Wrapper around MySQL-python connection.s
 
-sqlite  -
+falias.sqlite
+    Wrapper around sqlite3 connection.
 
-security -
+falias.security
+    Security library is based on smartsalt function which salt text depend
+    on input text.
 
-util    -
+falias.util
+    Support library for auto convert or check types.
 
-smtp    -
+falias.smtp
+    Contains some end-user classes for mailing.
 
-parser  - ConfigParser wrapper for type conversation
-
+falias.parser
+    ConfigParser wrapper for type conversation
 """
 
-__all__ = ['mysql', 'sqlite', 'sql', 'security', 'util', 'smtp']
+__all__ = ['mysql', 'sqlite', 'sql', 'security', 'util', 'smtp', 'parser']
 
-__author__ = "Ondrej Tuma (McBig) <mcbig@zeropage.cz>"
 __date__ = "23 Januar 2014"
 __version__ = "0.0.1"

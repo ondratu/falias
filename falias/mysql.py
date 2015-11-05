@@ -1,3 +1,19 @@
+"""Wrapper around MySQL-python connection.
+
+Example of use:
+
+>>> from logging import error
+>>> from falias.sql import Sql
+>>> db = Sql('mysql://localhost/test')
+>>> tr = db.transaction(logger=error)
+>>> c = tr.cursor()
+>>> c.execute("SELECT %d LIMIT 1", 1)
+ERROR:root:SQL: SELECT 1 WHERE 1 = 1 LIMIT 1
+>>> print(c.fetchone()[0])
+1
+>>> del(tr)
+ERROR:root:SQL: calling rollback()
+"""
 
 import MySQLdb.cursors as cursors
 from MySQLdb.connections import Connection
@@ -59,7 +75,8 @@ class BaseCursor(cursors.BaseCursor):
             self.logger("SQL: \33[0;32m%s\33[0m" % sql)
         return cursors.BaseCursor.execute(self, sql)
 
-    def unlockTables(self):
+    def unlock_tables(self):
+        """Call unlock tables."""
         self.execute('UNLOCK TABLES')
 
 
@@ -76,7 +93,7 @@ class DictCursor(BaseCursor, cursors.DictCursor):
 
 
 class Transaction():
-    """  Transaction connection class  """
+    """Transaction connection class with automatic rollback in destructor."""
 
     def __init__(self, connection, logger=None):
         """ logger is log handler with one text parametr """
@@ -86,27 +103,34 @@ class Transaction():
         self.logger = logger
 
     def cursor(self, cursorclass=Cursor):
+        """Create and return cursor.
+
+        Cursor could be Cursor (default) or DictCursor."""
         c = self.conn.cursor(cursorclass)
         c.logger = self.logger
         return c
 
     def commit(self):
+        """Commit transaction and log it when logger was set."""
         self.commited = True
         if self.logger is not None:
             self.logger('SQL: \33[3;34mcalling commit()\33[0m')
         return self.conn.commit()
 
     def rollback(self):
+        """Rollback transaction and log it when logger was set."""
         self.commited = False
         if self.logger is not None:
             self.logger('SQL: \33[3;33mcalling rollback()\33[0m')
         return self.conn.rollback()
 
     def __del__(self):
+        """If transaction was not committed, call rollback."""
         if not self.commited:
             self.rollback()
 
 
+# Data Source Name regular expression for mysql connection
 re_dsn = re.compile(r"""\w+://            # driver
                               (?P<user>\w+)
                               (:(?P<passwd>\w+))?
@@ -118,6 +142,7 @@ re_dsn = re.compile(r"""\w+://            # driver
 
 
 def sql_init(self, dsn):
+    """__init__ method for Sql object."""
     match = re_dsn.match(dsn)
     if not match:
         raise RuntimeError("Bad MySQL Data Source Name `%s`", dsn)
@@ -137,15 +162,18 @@ def sql_init(self, dsn):
 
 
 def sql_reconnect(self):
+    """Reconect method for Sql object."""
     if self.connection is None:
         self.connection = Connection(**self.kwargs)
 
 
 def sql_disconnect(self):
+    """Sql method for sqlite. Doing nothing."""
     pass
 
 
 def sql_transaction(self, logger=None):
+    """Create and return Transaction object as method in Sql object."""
     self.reconnect()
     return Transaction(self.connection, logger)
 

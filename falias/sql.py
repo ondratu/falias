@@ -1,23 +1,22 @@
+"""Global sql wrapper for universal using depend on driver."""
+
 from types import MethodType
+from importlib import import_module
 
-_drivers = ("sqlite", "mysql")
-
-
-def sql_from_dsn(dsn):
-    driver = dsn[:dsn.find(':')]
-    if driver not in _drivers:
-        raise RuntimeError("Uknow Data Source Name `%s`" % driver)
-    return _drivers[driver](dsn)
+# list of Falias suported sql drivers
+drivers = ("sqlite", "mysql")
 
 
 class Sql:
-    """ SQL backend wrapper for _drivers """
+    """ SQL backend wrapper for drivers """
     def __init__(self, dsn):
         driver = dsn[:dsn.find(':')]
-        if driver not in _drivers:
+        if driver not in drivers:
             raise RuntimeError("Uknow Data Source Name `%s`" % driver)
+        print driver
 
-        m = __import__(driver)
+        m = import_module('falias.%s' % driver)
+        print m
         self.driver = driver
 
         m.sql_init(self, dsn)

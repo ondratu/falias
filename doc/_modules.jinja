@@ -1,0 +1,9 @@
+{% set api = load_module('falias') %}
+{% set api = api+load_module('falias.sql') %}
+{% set api = api+load_module('falias.mysql') %}
+{% set api = api+load_module('falias.sqlite') %}
+{% set api = api+load_module('falias.security') %}
+{% set api = api+load_module('falias.util') %}
+{% set api = api+load_module('falias.smtp') %}
+{% set api = api+load_module('falias.parser') %}
+{% do keywords(api) %}

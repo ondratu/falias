@@ -1,3 +1,19 @@
+"""Wrapper around sqlite3 connection.
+
+Example of use:
+
+>>> from logging import error
+>>> from falias.sql import Sql
+>>> db = Sql('sqlite:memory:')
+>>> tr = db.transaction(logger=error)
+>>> c = tr.cursor()
+>>> c.execute("SELECT DATE('2015-12-24') WHERE 1 == %d", 1)
+ERROR:root:SQL: SELECT DATE() AS NOW WHERE 1 == 1
+>>> print(c.fetchone()[0])
+2015-12-24
+>>> del(tr)
+ERROR:root:SQL: calling rollback()
+"""
 
 import re
 import sqlite3
@@ -6,18 +22,23 @@ from util import islistable, isnumber
 
 
 def regexp(pattern, string):
+    """regexp function for use in sql queries."""
     return (re.search(pattern, (string if string is not None else '')))
 
 
 class Cursor(sqlite3.Cursor):
+    """Extended cursor with tosql function, for better query arguments and
+    logging."""
     def __init__(self, connection):
         sqlite3.Cursor.__init__(self, connection)
         self.logger = None
 
     def __del__(self):
+        """Automatics closing cursor on destructor."""
         sqlite3.Cursor.close(self)
 
     def tosql(self, arg, charset):
+        """Convert arguments to right sql strings."""
         if arg is None:                                     # null
             arg = "NULL"
         elif isnumber(arg):                                 # float, int, long
@@ -32,12 +53,19 @@ class Cursor(sqlite3.Cursor):
         elif islistable(arg):                               # list, tuple, set
             arg = '(' + ','.join(self.tosql(a, charset) for a in arg) + ')'
         else:                                               #
-            raise TypeError('Unsuported type')
+            raise TypeError('Unsupported type')
         return arg
 
     def execute(self, query, args=(), charset = "utf-8"):
-        """ charset could be UTF-8, UTF-16BE or UTF-16LE """
+        """Execute query.
 
+        Arguments are convert to right SQL types, so sql could not be
+        injected with them. Unicode strings are automatically converts
+        to string encoded with charset which could be UTF-8, UTF-16BE
+        or UTF-16LE.
+
+        When logger was set, query was log with them.
+        """
         if isinstance(args, tuple) or isinstance(args, list):
             _args = []
             for arg in args:
@@ -53,55 +81,71 @@ class Cursor(sqlite3.Cursor):
 
 
 class DictCursor(Cursor):
+    """Implementation of Dictionary cursor for sqlite."""
     def __init__(self, connection):
         super(DictCursor, self).__init__(connection)
 
     def fetchone(self):
+        """Fetches a single row from the cursor.
+
+        None indicates that no more rows are available."""
         row = super(DictCursor, self).fetchone()
         return sqlite3.Row(self, row) if row else row
 
     def fetchall(self):
+        """Fetchs all available rows from the cursor."""
         rows = super(DictCursor, self).fetchall()
         return list(sqlite3.Row(self, row) for row in rows)
 
     def fetchmany(self, size=-1):
+        """Fetch up to size rows from the cursor.
+
+        Result set may be smaller than size. If size is not defined,
+        cursor.arraysize is used."""
         size = size if size > -1 else self.arraysize
         rows = super(DictCursor, self).fetchmany(size)
         return list(sqlite3.Row(self, row) for row in rows)
 
 
 class Transaction():
-    """  Transaction connection class  """
+    """Transaction connection class with automatic rollback in destructor."""
 
     def __init__(self, connection, logger=None):
-        """ logger is log handler with one text parametr """
+        """logger is log handler with one text parametr."""
         self.connection = connection
-        self.commited = False
+        self.committed = False
         self.logger = logger
 
     def cursor(self, cursorclass=Cursor):
+        """Create and return cursor.
+
+        Cursor could be Cursor (default) or DictCursor."""
         c = cursorclass(self.connection)
         c.logger = self.logger
         c.transaction = self
         return c
 
     def commit(self):
-        self.commited = True
+        """Commit transaction and log it when logger was set."""
+        self.committed = True
         if self.logger is not None:
             self.logger("SQL: \33[3;34mcalling commit()\33[0m")
         return self.connection.commit()
 
     def rollback(self):
-        self.commited = False
+        """Rollback transaction and log it when logger was set."""
+        self.committed = False
         if self.logger is not None:
             self.logger("SQL: \33[3;33mcalling rollback()\33[0m")
         return self.connection.rollback()
 
     def __del__(self):
-        if not self.commited:
+        """If transaction was not committed, call rollback."""
+        if not self.committed:
             self.rollback()
 
 
+# Data Source Name regular expression for sqlite connection
 re_dsn = re.compile("""\w+:       # driver
                         ((?P<memory>memory)|/(?P<dbfile>[\w\.\/]+))
                         (::)?(?P<charset>[\w\-]+)?
@@ -109,6 +153,7 @@ re_dsn = re.compile("""\w+:       # driver
 
 
 def sql_init(self, dsn):
+    """__init__ method for Sql object."""
     match = re_dsn.match(dsn)
     if not match:
         raise RuntimeError("Bad SQLite Data Source Name `%s`", dsn)
@@ -118,6 +163,7 @@ def sql_init(self, dsn):
 
 
 def sql_reconnect(self):
+    """Reconect method for Sql object."""
     if self.dbfile:
         try:
             conn = sqlite3.connect(self.dbfile)
@@ -133,12 +179,15 @@ def sql_reconnect(self):
 
 
 def sql_disconnect(self):
+    """Sql method for sqlite. Doing nothing."""
     pass
 
 
 def sql_transaction(self, logger=None):
+    """Create and return Transaction object as method in Sql object."""
     return Transaction(self.reconnect(), logger)
 
 
 def __str__(self):
+    """Return Data Source Name string from Sql object."""
     return "sqlite:/%s::%s" % (self.dbfile or 'memory', self.charset)

@@ -1,6 +1,5 @@
 BSD Licence
 -----------
-
 Copyright (c) 2015, Ondřej Tůma. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -25,3 +24,8 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Dependent libraries
+-------------------
+Falias as wrapper around many functionality use some other libraries. Each of
+that have it's own licence, which you find at it's place.

@@ -1,0 +1,10 @@
+{% set title = 'Falias' -%}
+
+{% set sections = load_rst("../README.rst") -%}
+
+{#      need api for keywords yea?      #}
+{% from "_modules.jinja" import api -%}
+
+{% from "_menu.jinja" import menu %}
+{% do menu[0].update({'selected': True}) %}
+{% include "_text.html" %}

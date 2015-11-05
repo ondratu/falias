@@ -51,6 +51,11 @@ class build_html(Command):
         if self.html_temp is None:
             self.html_temp = path.join(self.build_base, 'html')
 
+    def jinja24doc(self, template, output):
+        if call(['jinja24doc', '-v', template, 'doc'],
+                stdout=file(self.html_temp + output, 'w')):
+            raise IOError(1, 'jinja24doc failed')
+
     def run(self):
         log.info("building html docmuentation")
         if self.dry_run:
@@ -58,17 +63,9 @@ class build_html(Command):
 
         if not path.exists(self.html_temp):
             makedirs(self.html_temp)
-        if call(['jinja24doc', '-v', 'readme.html', 'doc'],
-                stdout=file(self.html_temp + '/index.html', 'w')):
-            raise IOError(1, 'jinja24doc failed')
-
-        if call(['jinja24doc', '-v', 'reference.html', 'doc'],
-                stdout=file(self.html_temp + '/api.html', 'w')):
-            raise IOError(1, 'jinja24doc failed')
-
-        if call(['jinja24doc', '-v', 'licence.html', 'doc'],
-                stdout=file(self.html_temp + '/licence.html', 'w')):
-            raise IOError(1, 'jinja24doc failed')
+        self.jinja24doc('readme.html', '/index.html')
+        self.jinja24doc('reference.html', '/api.html')
+        self.jinja24doc('licence.html', '/licence.html')
         copyfile('doc/style.css', self.html_temp + '/style.css')
 
 
