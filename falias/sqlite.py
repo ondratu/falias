@@ -74,7 +74,7 @@ class Cursor(sqlite3.Cursor):
         else:
             args = self.tosql(args, charset)
 
-        sql = query % args
+        sql = query % args if args else query
         if self.logger is not None:
             self.logger("SQL: \33[0;32m%s\33[0m" % sql)
         return sqlite3.Cursor.execute(self, sql)
