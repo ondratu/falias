@@ -52,6 +52,11 @@ def dict_difference(one, two):
 
 class Object(object):
     """ Simple object with __contains__ method, so 'prop' in obj will work """
+    def __init__(self, **kwargs):
+        """Set keyword arguments as object properties."""
+        for key, val in kwargs.items():
+            setattr(self, key, val)
+
     def __contains__(self, key):
         return self.__dict__.__contains__(key)
 
