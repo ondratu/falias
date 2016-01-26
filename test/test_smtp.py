@@ -1,9 +1,15 @@
-import pytest
+"""Run test by:
+    $~ py.test tests/test_smtp.py
+"""
 
-from sys import path
-path.insert(0, '../')
+from sys import path as python_path
+from os import path
 
-from falias.smtp import *
+python_path.insert(0, path.abspath(
+                   path.join(path.dirname(__file__), path.pardir)))
+
+from falias.smtp import Smtp
+
 
 def test_smtp():
     Smtp('smtp://localhost/mcbig@localhost')
