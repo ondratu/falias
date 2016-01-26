@@ -15,8 +15,9 @@ ERROR:root:SQL: SELECT DATE() AS NOW WHERE 1 == 1
 ERROR:root:SQL: calling rollback()
 """
 
-import re
 import sqlite3
+
+import re
 
 from util import islistable, isnumber
 
@@ -66,6 +67,7 @@ class Cursor(sqlite3.Cursor):
 
         When logger was set, query was log with them.
         """
+        assert isinstance(query, (str, unicode))
         if isinstance(args, tuple) or isinstance(args, list):
             _args = []
             for arg in args:
@@ -74,7 +76,17 @@ class Cursor(sqlite3.Cursor):
         else:
             args = self.tosql(args, charset)
 
-        sql = query % args if args else query
+        if isinstance(query, unicode):
+            query = query.encode(charset)
+
+        try:
+            sql = query % args if args else query
+        except:
+            if self.logger is not None:
+                self.logger("SQL \33[0;31mquery: %s\33[0m" % query)
+                self.logger("SQL args: %s" % str(args))
+            raise
+
         if self.logger is not None:
             self.logger("SQL: \33[0;32m%s\33[0m" % sql)
         return sqlite3.Cursor.execute(self, sql)
