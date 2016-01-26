@@ -69,3 +69,9 @@ class Options:
             raise RuntimeError('Envirnonment variable `%s` is not set' % key)
         value = self.o.get(key, default).strip()
         return smart_get(value, cls, delimiter)
+
+    def options(self, section):
+        """Returns options in section like in ConfigParser."""
+        sec_len = len(section) + 1
+        return list(key[sec_len:] for key, value in self.o.items()
+                    if key.startswith("%s_" % section))
