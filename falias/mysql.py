@@ -95,12 +95,22 @@ class DictCursor(BaseCursor, cursors.DictCursor):
 class Transaction():
     """Transaction connection class with automatic rollback in destructor."""
 
-    def __init__(self, connection, logger=None):
+    def __init__(self, connection, logger=None, ctx_cursor=Cursor):
         """ logger is log handler with one text parametr """
         self.conn = connection
         self.conn.ping(True)
         self.commited = False
         self.logger = logger
+        self.ctx_cursor = ctx_cursor
+
+    def __enter__(self):
+        return self.cursor(self.ctx_cursor)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type is None:
+            self.commit()
+        else:
+            self.rollback()
 
     def cursor(self, cursorclass=Cursor):
         """Create and return cursor.
@@ -108,6 +118,7 @@ class Transaction():
         Cursor could be Cursor (default) or DictCursor."""
         c = self.conn.cursor(cursorclass)
         c.logger = self.logger
+        c.transaction = self
         return c
 
     def commit(self):
@@ -141,7 +152,7 @@ re_dsn = re.compile(r"""\w+://            # driver
                            """, re.X)
 
 
-def sql_init(self, dsn):
+def __init__(self, dsn):
     """__init__ method for Sql object."""
     match = re_dsn.match(dsn)
     if not match:
@@ -161,21 +172,23 @@ def sql_init(self, dsn):
     self.connection = None
 
 
-def sql_reconnect(self):
+def connect(self):
     """Reconect method for Sql object."""
-    if self.connection is None:
-        self.connection = Connection(**self.kwargs)
+    if self.connection is not None:
+        return self.connection
+
+    self.connection = Connection(**self.kwargs)
 
 
-def sql_disconnect(self):
-    """Sql method for sqlite. Doing nothing."""
-    pass
+def close(self):
+    """Close connection."""
+    self.connection.close()
 
 
-def sql_transaction(self, logger=None):
+def transaction(self, **kwargs):
     """Create and return Transaction object as method in Sql object."""
-    self.reconnect()
-    return Transaction(self.connection, logger)
+    self.connect()
+    return Transaction(self.connection, **kwargs)
 
 
 def __str__(self):

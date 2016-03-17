@@ -122,11 +122,21 @@ class DictCursor(Cursor):
 class Transaction():
     """Transaction connection class with automatic rollback in destructor."""
 
-    def __init__(self, connection, logger=None):
+    def __init__(self, connection, logger=None, ctx_cursor=Cursor):
         """logger is log handler with one text parametr."""
         self.connection = connection
         self.committed = False
         self.logger = logger
+        self.ctx_cursor = ctx_cursor
+
+    def __enter__(self):
+        return self.cursor(self.ctx_cursor)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type is None:
+            self.commit()
+        else:
+            self.rollback()
 
     def cursor(self, cursorclass=Cursor):
         """Create and return cursor.
@@ -164,40 +174,56 @@ re_dsn = re.compile("""\w+:       # driver
                     """, re.X)
 
 
-def sql_init(self, dsn):
+def __init__(self, dsn, **kwargs):
     """__init__ method for Sql object."""
-    match = re_dsn.match(dsn)
-    if not match:
-        raise RuntimeError("Bad SQLite Data Source Name `%s`", dsn)
-    self.dbfile = match.group('dbfile')
-    self.memory = match.group('memory')
-    self.charset = match.group('charset') or "utf-8"
+    if kwargs:
+        self.dbfile = kwargs.get('dbfile')
+        self.memory = kwargs.get('memory')
+        self.charset = kwargs.get('charset', 'utf-8')
+
+    else:
+        match = re_dsn.match(dsn)
+        if not match:
+            raise RuntimeError("Bad SQLite Data Source Name `%s`", dsn)
+        self.dbfile = match.group('dbfile')
+        self.memory = match.group('memory')
+        self.charset = match.group('charset') or 'utf-8'
 
 
-def sql_reconnect(self):
+def connect(self):
     """Reconect method for Sql object."""
+    if self.connection is not None:
+        return self.connection
+
     if self.dbfile:
         try:
-            conn = sqlite3.connect(self.dbfile)
+            self.connection = sqlite3.connect(self.dbfile)
         except sqlite3.OperationalError as e:
             e.args = e.args + (self.dbfile,)
             raise e
     else:
-        conn = sqlite3.connect(":memory:")
+        self.connection = sqlite3.connect(":memory:")
 
     # PRAGMA encoding = "UTF-8"; # UTF-8 | UTF-16 | UTF-16le | UTF-16be
-    conn.execute("PRAGMA foreign_keys = ON")    # eneble foreign keys
-    return conn
+    self.connection.execute("PRAGMA foreign_keys = ON")  # eneble foreign keys
+# enddef
 
 
-def sql_disconnect(self):
-    """Sql method for sqlite. Doing nothing."""
-    pass
+def close(self):
+    """Close connection."""
+    self.connection.close()
 
 
-def sql_transaction(self, logger=None):
+def transaction(self, **kwargs):
     """Create and return Transaction object as method in Sql object."""
-    return Transaction(self.reconnect(), logger)
+    self.connect()
+    return Transaction(self.connection, **kwargs)
+
+
+def __copy__(self):
+    """Return copy of object for new thread or new proccess."""
+    return self.__class__('', driver=self.driver, dbfile=self.dbfile,
+                          memory=self.memory)
 
 
 def __str__(self):
