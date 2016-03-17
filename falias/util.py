@@ -1,5 +1,7 @@
 """Support library for auto convert or check types."""
 
+from json import JSONEncoder
+
 
 def uni(text):
     """Automatic conversion from str to unicode with utf-8 encoding."""
@@ -58,7 +60,27 @@ class Object(object):
             setattr(self, key, val)
 
     def __contains__(self, key):
-        return self.__dict__.__contains__(key)
+        return hasattr(self, key)
+
+    def __json__(self):
+        """Return dictionary for json.
+
+        This method was be called by ObjectEncoder.
+        """
+        rv = self.__dict__.copy()
+        rv['__class__'] = self.__class__.__name__
+        return rv
+
+
+class ObjectEncoder(JSONEncoder):
+    """JSONEncoder class for Object instance.
+
+    Call Object.__json__ method, for better json export.
+    """
+    def default(self, obj):
+        if isinstance(obj, Object):
+            return obj.__json__()
+        return JSONEncoder.default(self, obj)
 
 
 class Size(object):
