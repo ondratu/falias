@@ -19,7 +19,7 @@ import sqlite3
 
 import re
 
-from util import islistable, isnumber
+from falias.util import islistable, isnumber
 
 
 def regexp(pattern, string):
@@ -90,6 +90,11 @@ class Cursor(sqlite3.Cursor):
         if self.logger is not None:
             self.logger("SQL: \33[0;32m%s\33[0m" % sql)
         return sqlite3.Cursor.execute(self, sql)
+
+    def executescript(self, sql_script):
+        if self.logger is not None:
+            self.logger("SQL: \33[0;32mcalling sql script\33[0m")
+        return sqlite3.Cursor.executescript(self, sql_script)
 
 
 class DictCursor(Cursor):
@@ -211,7 +216,8 @@ def connect(self):
 
 def close(self):
     """Close connection."""
-    self.connection.close()
+    if self.connection is not None:
+        self.connection.close()
 
 
 def transaction(self, **kwargs):

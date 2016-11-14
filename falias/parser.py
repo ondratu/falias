@@ -1,15 +1,23 @@
 """
 ConfigParser wrapper for type conversation
 """
-from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+from sys import version_info
 
-from util import uni
+if version_info[0] < 3:         # python 2.x
+    from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+    uni_cls = unicode
+
+else:                           # python 3.x
+    from configparser import ConfigParser, NoSectionError, NoOptionError
+    uni_cls = str
+
+from falias.util import uni
 
 
-def smart_get(value, cls=unicode, delimiter=','):
+def smart_get(value, cls=uni_cls, delimiter=','):
     """ Smart convert function, which convert value to cls. """
 
-    if issubclass(cls, unicode):
+    if issubclass(cls, uni_cls):
         return uni(value)
     if issubclass(cls, str):
         return value
@@ -20,7 +28,7 @@ def smart_get(value, cls=unicode, delimiter=','):
             return False
         else:
             raise ValueError("%s is not boolean value" % value)
-    if issubclass(cls, list) or issubclass(cls, tuple):
+    if cls in (list, tuple):
         if value:
             return cls(map(lambda s: uni(s.strip()), value.split(delimiter)))
         return cls()
@@ -31,7 +39,7 @@ def smart_get(value, cls=unicode, delimiter=','):
 class Parser(ConfigParser):
     """ Wrapper to ConfigParser class, with better get method. """
 
-    def get(self, section, option, default=None, cls=unicode, delimiter=','):
+    def get(self, section, option, default=None, cls=uni_cls, delimiter=','):
         """
         Method do the same as original get, but it can work with default value
         and use smart_get convert function to converting values to classes.
@@ -61,7 +69,7 @@ class Options:
     def __init__(self, options):
         self.o = options
 
-    def get(self, sec, key, default=None, cls=unicode, delimiter=','):
+    def get(self, sec, key, default=None, cls=uni_cls, delimiter=','):
         default = None if default is None else str(default)
 
         key = "%s_%s" % (sec, key)

@@ -1,13 +1,19 @@
 """Support library for auto convert or check types."""
 
 from json import JSONEncoder
+from sys import version_info
 
+if version_info[0] < 3:         # python 2.x
+    def uni(text):
+        """Automatic conversion from str to unicode with utf-8 encoding."""
+        if isinstance(text, str):
+            return unicode(text, encoding='utf-8')
+        return unicode(text)
 
-def uni(text):
-    """Automatic conversion from str to unicode with utf-8 encoding."""
-    if isinstance(text, str):
-        return unicode(text, encoding='utf-8')
-    return unicode(text)
+else:                           # python 3.x
+    def uni(text):
+        """Python 2x compatibility function."""
+        return str(text)
 
 
 def nuni(val):
@@ -98,14 +104,14 @@ class Size(object):
         return (self.width, self.height)
 
 
-class Paths(tuple):
+class Paths(list):
     """Paths object parse string and split it with colon character."""
     def __init__(self, value):
         if value:
-            super(tuple, self).__init__(
+            super(Paths, self).__init__(
                 uni(it.strip()) for it in uni(value).split(':'))
         else:
-            super(tuple, self)
+            super(Paths, self).__init()
 
     def __str__(self):
         return ':'.join(self)
