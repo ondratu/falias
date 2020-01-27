@@ -3,24 +3,11 @@
 from json import JSONEncoder
 from sys import version_info
 
-if version_info[0] < 3:         # python 2.x
-    def uni(text):
-        """Automatic conversion from str to unicode with utf-8 encoding."""
-        if isinstance(text, str):
-            return unicode(text, encoding='utf-8')
-        return unicode(text)
-
-else:                           # python 3.x
-    def uni(text):
-        """Python 2x compatibility function."""
-        return str(text)
-
-
-def nuni(val):
+def nstr(val):
     """Return None or unicode."""
     if val is None:
         return None
-    return uni(val)
+    return str(val)
 
 
 def nint(val):
@@ -37,7 +24,7 @@ def islistable(obj):
 
 def isnumber(obj):
     """Return True if obj is number."""
-    return isinstance(obj, (float, int, long))
+    return isinstance(obj, (float, int))
 
 
 def uniq(l):
@@ -109,9 +96,9 @@ class Paths(list):
     def __init__(self, value):
         if value:
             super(Paths, self).__init__(
-                uni(it.strip()) for it in uni(value).split(':'))
+                it.strip() for it in value.split(':'))
         else:
-            super(Paths, self).__init()
+            super(Paths, self).__init__()
 
     def __str__(self):
         return ':'.join(self)
