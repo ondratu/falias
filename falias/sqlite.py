@@ -42,11 +42,10 @@ class Cursor(sqlite3.Cursor):
         """Convert arguments to right sql strings."""
         if arg is None:                                     # null
             arg = "NULL"
-        elif isnumber(arg):                                 # float, int, long
+        elif isnumber(arg):                                 # float, int
             pass                                            # num
-        elif isinstance(arg, str) or isinstance(arg, unicode):  # str & unicode
-            if isinstance(arg, unicode):
-                arg = arg.encode(charset)
+        elif isinstance(arg, str):                          # str
+            # arg = arg.encode(charset)
             arg = arg.replace("'", "''")
             arg = "'%s'" % arg
         elif isinstance(arg, bool):                         # bool
@@ -57,7 +56,7 @@ class Cursor(sqlite3.Cursor):
             raise TypeError('Unsupported type')
         return arg
 
-    def execute(self, query, args=(), charset = "utf-8"):
+    def execute(self, query, args=(), charset="utf-8"):
         """Execute query.
 
         Arguments are convert to right SQL types, so sql could not be
@@ -67,7 +66,9 @@ class Cursor(sqlite3.Cursor):
 
         When logger was set, query was log with them.
         """
-        assert isinstance(query, (str, unicode))
+        assert isinstance(query, str)
+        # query = query.encode(charset)
+
         if isinstance(args, tuple) or isinstance(args, list):
             _args = []
             for arg in args:
@@ -75,9 +76,6 @@ class Cursor(sqlite3.Cursor):
             args = tuple(_args)
         else:
             args = self.tosql(args, charset)
-
-        if isinstance(query, unicode):
-            query = query.encode(charset)
 
         try:
             sql = query % args if args else query
@@ -130,7 +128,7 @@ class Transaction():
     def __init__(self, connection, logger=None, ctx_cursor=Cursor):
         """logger is log handler with one text parametr."""
         self.connection = connection
-        self.committed = False
+        self.done = False
         self.logger = logger
         self.ctx_cursor = ctx_cursor
 
@@ -154,21 +152,21 @@ class Transaction():
 
     def commit(self):
         """Commit transaction and log it when logger was set."""
-        self.committed = True
+        self.done = True
         if self.logger is not None:
             self.logger("SQL: \33[3;34mcalling commit()\33[0m")
         return self.connection.commit()
 
     def rollback(self):
         """Rollback transaction and log it when logger was set."""
-        self.committed = False
+        self.done = True
         if self.logger is not None:
             self.logger("SQL: \33[3;33mcalling rollback()\33[0m")
         return self.connection.rollback()
 
     def __del__(self):
-        """If transaction was not committed, call rollback."""
-        if not self.committed:
+        """If transaction was not done, call rollback."""
+        if not self.done:
             self.rollback()
 
 
