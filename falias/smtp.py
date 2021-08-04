@@ -31,8 +31,8 @@ import re
 
 # Data Source Name regular expression for smtp server
 re_dsn = re.compile("""smtp://          # driver
-                                ((?P<user>[\w\.]+)?
-                                (:(?P<passwd>[\w\.]+))?@)?
+                                ((?P<user>[\w\.@\-]+)?
+                                (:(?P<passwd>[\w\.\@\!\?\#]+))?@)?
                                 (?P<host>[\w\.]+)?
                                 (:(?P<port>[0-9]+))?
                                 /(?P<sender>[\w\.\-]+@[\w\.\-]+)?
