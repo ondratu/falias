@@ -172,7 +172,7 @@ class Transaction():
 
 # Data Source Name regular expression for sqlite connection
 re_dsn = re.compile("""\w+:       # driver
-                        ((?P<memory>memory)|/(?P<dbfile>[\w\.\/]+))
+                        ((?P<memory>memory)|/(?P<dbfile>[\w\.\/\-]+))
                         (::)?(?P<charset>[\w\-]+)?
                     """, re.X)
 
