@@ -6,17 +6,17 @@ from importlib import import_module
 drivers = ("sqlite", "mysql")
 
 
-class Sql(object):
+class Sql:
     """ SQL backend wrapper for drivers """
-    def __init__(self, dsn='', **kwargs):
-        driver = kwargs.get('driver')
+    def __init__(self, dsn="", **kwargs):
+        driver = kwargs.get("driver")
         if driver is None:
-            driver = dsn[:dsn.find(':')]
+            driver = dsn[:dsn.find(":")]
         if driver not in drivers:
-            raise RuntimeError("Uknow Data Source Name `%s`" % driver)
+            raise RuntimeError(f"Uknow Data Source Name `{driver}`")
 
         self.driver = driver
-        self.m = import_module('falias.%s' % driver)
+        self.m = import_module(f"falias.{driver}")
 
         self.connection = None
         self.m.__init__(self, dsn, **kwargs)
@@ -30,9 +30,9 @@ class Sql(object):
     def transaction(self, logger=None, cursor=None):
         kwargs = {}
         if logger:
-            kwargs['logger'] = logger
+            kwargs["logger"] = logger
         if cursor:
-            kwargs['ctx_cursor'] = cursor
+            kwargs["ctx_cursor"] = cursor
         return self.m.transaction(self, **kwargs)
 
     def __copy__(self):

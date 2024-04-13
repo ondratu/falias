@@ -15,16 +15,15 @@ ERROR:root:SQL: SELECT DATE() AS NOW WHERE 1 == 1
 ERROR:root:SQL: calling rollback()
 """
 
-import sqlite3
-
 import re
+import sqlite3
 
 from falias.util import islistable, isnumber
 
 
 def regexp(pattern, string):
     """regexp function for use in sql queries."""
-    return (re.search(pattern, (string if string is not None else '')))
+    return (re.search(pattern, (string if string is not None else "")))
 
 
 class Cursor(sqlite3.Cursor):
@@ -32,6 +31,7 @@ class Cursor(sqlite3.Cursor):
     logging."""
     def __init__(self, connection):
         sqlite3.Cursor.__init__(self, connection)
+        self.transaction = None
         self.logger = None
 
     def __del__(self):
@@ -47,13 +47,14 @@ class Cursor(sqlite3.Cursor):
         elif isinstance(arg, str):                          # str
             # arg = arg.encode(charset)
             arg = arg.replace("'", "''")
-            arg = "'%s'" % arg
+            arg = f"'{arg}'"
         elif isinstance(arg, bool):                         # bool
             arg = 1 if arg else 0
         elif islistable(arg):                               # list, tuple, set
-            arg = '(' + ','.join(self.tosql(a, charset) for a in arg) + ')'
+            arg = "(" + ",".join(self.tosql(a, charset) for a in arg) + ")"
         else:                                               #
-            raise TypeError('Unsupported type')
+            msg = "Unsupported type"
+            raise TypeError(msg)
         return arg
 
     def execute(self, query, args=(), charset="utf-8"):
@@ -69,7 +70,7 @@ class Cursor(sqlite3.Cursor):
         assert isinstance(query, str)
         # query = query.encode(charset)
 
-        if isinstance(args, tuple) or isinstance(args, list):
+        if isinstance(args, (list, tuple)):
             _args = []
             for arg in args:
                 _args.append(self.tosql(arg, charset))
@@ -79,7 +80,7 @@ class Cursor(sqlite3.Cursor):
 
         try:
             sql = query % args if args else query
-        except:
+        except Exception:
             if self.logger is not None:
                 self.logger("SQL \33[0;31mquery: %s\33[0m" % query)
                 self.logger("SQL args: %s" % str(args))
@@ -97,20 +98,17 @@ class Cursor(sqlite3.Cursor):
 
 class DictCursor(Cursor):
     """Implementation of Dictionary cursor for sqlite."""
-    def __init__(self, connection):
-        super(DictCursor, self).__init__(connection)
-
     def fetchone(self):
         """Fetches a single row from the cursor.
 
         None indicates that no more rows are available."""
-        row = super(DictCursor, self).fetchone()
+        row = super().fetchone()
         return sqlite3.Row(self, row) if row else row
 
     def fetchall(self):
         """Fetchs all available rows from the cursor."""
-        rows = super(DictCursor, self).fetchall()
-        return list(sqlite3.Row(self, row) for row in rows)
+        rows = super().fetchall()
+        return [sqlite3.Row(self, row) for row in rows]
 
     def fetchmany(self, size=-1):
         """Fetch up to size rows from the cursor.
@@ -118,8 +116,8 @@ class DictCursor(Cursor):
         Result set may be smaller than size. If size is not defined,
         cursor.arraysize is used."""
         size = size if size > -1 else self.arraysize
-        rows = super(DictCursor, self).fetchmany(size)
-        return list(sqlite3.Row(self, row) for row in rows)
+        rows = super().fetchmany(size)
+        return [sqlite3.Row(self, row) for row in rows]
 
 
 class Transaction():
@@ -171,7 +169,7 @@ class Transaction():
 
 
 # Data Source Name regular expression for sqlite connection
-re_dsn = re.compile("""\w+:       # driver
+re_dsn = re.compile(r"""\w+:       # driver
                         ((?P<memory>memory)|/(?P<dbfile>[\w\.\/]+))
                         (::)?(?P<charset>[\w\-]+)?
                     """, re.X)
@@ -180,17 +178,18 @@ re_dsn = re.compile("""\w+:       # driver
 def __init__(self, dsn, **kwargs):
     """__init__ method for Sql object."""
     if kwargs:
-        self.dbfile = kwargs.get('dbfile')
-        self.memory = kwargs.get('memory')
-        self.charset = kwargs.get('charset', 'utf-8')
+        self.dbfile = kwargs.get("dbfile")
+        self.memory = kwargs.get("memory")
+        self.charset = kwargs.get("charset", "utf-8")
 
     else:
         match = re_dsn.match(dsn)
         if not match:
-            raise RuntimeError("Bad SQLite Data Source Name `%s`", dsn)
-        self.dbfile = match.group('dbfile')
-        self.memory = match.group('memory')
-        self.charset = match.group('charset') or 'utf-8'
+            msg = "Bad SQLite Data Source Name `%s`"
+            raise RuntimeError(msg, dsn)
+        self.dbfile = match.group("dbfile")
+        self.memory = match.group("memory")
+        self.charset = match.group("charset") or "utf-8"
 
 
 def connect(self):
@@ -202,13 +201,14 @@ def connect(self):
         try:
             self.connection = sqlite3.connect(self.dbfile)
         except sqlite3.OperationalError as e:
-            e.args = e.args + (self.dbfile,)
-            raise e
+            e.args = (*e.args, self.dbfile)
+            raise
     else:
         self.connection = sqlite3.connect(":memory:")
 
     # PRAGMA encoding = "UTF-8"; # UTF-8 | UTF-16 | UTF-16le | UTF-16be
     self.connection.execute("PRAGMA foreign_keys = ON")  # eneble foreign keys
+    return None
 # enddef
 
 
@@ -226,10 +226,10 @@ def transaction(self, **kwargs):
 
 def __copy__(self):
     """Return copy of object for new thread or new proccess."""
-    return self.__class__('', driver=self.driver, dbfile=self.dbfile,
+    return self.__class__("", driver=self.driver, dbfile=self.dbfile,
                           memory=self.memory)
 
 
 def __str__(self):
     """Return Data Source Name string from Sql object."""
-    return "sqlite:/%s::%s" % (self.dbfile or 'memory', self.charset)
+    return "sqlite:/%s::%s" % (self.dbfile or "memory", self.charset)

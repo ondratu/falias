@@ -13,24 +13,15 @@ email by Smtp class.
 >>>         print('Something wrong: %s' % e)
 """
 
-from sys import version_info
-
-if version_info[0] < 3:         # python 2.x
-    from email.MIMEText import MIMEText
-    from email.MIMEMultipart import MIMEMultipart
-
-else:                           # python 3.x
-    from email.mime.text import MIMEText
-    from email.mime.multipart import MIMEMultipart
-
-from smtplib import SMTP, SMTPException
-from time import strftime, localtime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 import re
-
+from smtplib import SMTP, SMTPException
+from time import localtime, strftime
 
 # Data Source Name regular expression for smtp server
-re_dsn = re.compile("""smtp://          # driver
+re_dsn = re.compile(r"""smtp://          # driver
                                 ((?P<user>[\w\.@\-]+)?
                                 (:(?P<passwd>[\w\.\@\!\?\#]+))?@)?
                                 (?P<host>[\w\.]+)?
@@ -54,23 +45,22 @@ class Smtp:
         """
         match = re_dsn.match(dsn)
         if not match:
-            raise RuntimeError("Bad SMTP Data Source Name `%s`" % dsn)
+            raise RuntimeError(f"Bad SMTP Data Source Name `{dsn}`")
 
-        self.host = match.group('host') or "localhost"
-        self.port = int(match.group('port') or 25)
-        self.sender = match.group('sender') or ''
-        self.charset = match.group('charset') or 'utf-8'
-        self.user = match.group('user') or None
-        self.passwd = match.group('passwd') or None
+        self.host = match.group("host") or "localhost"
+        self.port = int(match.group("port") or 25)
+        self.sender = match.group("sender") or ""
+        self.charset = match.group("charset") or "utf-8"
+        self.user = match.group("user") or None
+        self.passwd = match.group("passwd") or None
 
-        self.xmailer = 'Falias (http://falias.zeropage.cz)'
-    # enddef
+        self.xmailer = "Falias (http://falias.zeropage.cz)"
 
     def __str__(self):
         """Return Data Source Name of set values."""
         return "smtp://%s%s%s%s:%d/%s::%s" % \
-            (self.user or '', self.passwd or '',
-             '@' if self.user or self.passwd else '',
+            (self.user or "", self.passwd or "",
+             "@" if self.user or self.passwd else "",
              self.host, self.port,
              self.sender, self.charset)
 
@@ -85,20 +75,20 @@ class Smtp:
         """
         msg = MIMEText(body)
         msg.set_charset(self.charset)
-        msg['Subject'] = subject
-        msg['From'] = kwargs['sender'] if 'sender' in kwargs else self.sender
-        msg['To'] = recipient
-        msg['Date'] = strftime("%a, %d %b %Y %X %z", localtime())
+        msg["Subject"] = subject
+        msg["From"] = kwargs.get("sender", self.sender)
+        msg["To"] = recipient
+        msg["Date"] = strftime("%a, %d %b %Y %X %z", localtime())
 
         # headers
-        if 'reply' in kwargs:
-            msg['Reply-To'] = kwargs['reply']
+        if "reply" in kwargs:
+            msg["Reply-To"] = kwargs["reply"]
 
-        msg['X-Mailer'] = kwargs.get('xmailer', self.xmailer)
+        msg["X-Mailer"] = kwargs.get("xmailer", self.xmailer)
 
         if logger:
             logger("SMTP: \33[0;32mSub:%s, From:%s, To:%s\33[0m" %
-                   (msg['Subject'], msg['From'], msg['To']))
+                   (msg["Subject"], msg["From"], msg["To"]))
 
         smtp = SMTP()
         try:
@@ -110,17 +100,16 @@ class Smtp:
             smtp.close()
             if logger:
                 logger("SMTP: \33[3;33mConnection failed\33[0m %s" % str(e))
-            raise e
+            raise
 
         try:
-            smtp.sendmail(msg['From'], msg['To'], msg.as_string())
+            smtp.sendmail(msg["From"], msg["To"], msg.as_string())
         except SMTPException as e:
             if logger:
                 logger("SMTP: \33[3;33mSendig email failed\33[0m %s" % str(e))
-            raise e
+            raise
         finally:
             smtp.close()
-    # enddef
 
     def send_email_alternative(self, subject, recipient, txt_body,  html_body,
                                logger=None, **kwargs):
@@ -132,21 +121,21 @@ class Smtp:
             - `reply` Reply-To header
             - `xmailer` X-Mailer header, default is Falias
         """
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = subject
-        msg['From'] = kwargs['sender'] if 'sender' in kwargs else self.sender
-        msg['To'] = recipient
-        msg['Date'] = strftime("%a, %d %b %Y %X %z", localtime())
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = kwargs.get("sender", self.sender)
+        msg["To"] = recipient
+        msg["Date"] = strftime("%a, %d %b %Y %X %z", localtime())
 
         # headers
-        if 'reply' in kwargs:
-            msg['Reply-To'] = kwargs['reply']
-        msg['X-Mailer'] = kwargs.get('xmailer', self.xmailer)
+        if "reply" in kwargs:
+            msg["Reply-To"] = kwargs["reply"]
+        msg["X-Mailer"] = kwargs.get("xmailer", self.xmailer)
 
         # body
-        part1 = MIMEText(txt_body, 'plain')
+        part1 = MIMEText(txt_body, "plain")
         part1.set_charset(self.charset)
-        part2 = MIMEText(html_body, 'html')
+        part2 = MIMEText(html_body, "html")
         part2.set_charset(self.charset)
 
         msg.attach(part1)
@@ -154,7 +143,7 @@ class Smtp:
 
         if logger:
             logger("SMTP: \33[0;32mSub:%s, From:%s, To:%s\33[0m" %
-                   (msg['Subject'], msg['From'], msg['To']))
+                   (msg["Subject"], msg["From"], msg["To"]))
 
         smtp = SMTP()
         try:
@@ -166,29 +155,27 @@ class Smtp:
             smtp.close()
             if logger:
                 logger("SMTP: \33[3;33mConnection failed\33[0m %s" % str(e))
-            raise e
+            raise
 
         try:
-            smtp.sendmail(msg['From'], msg['To'], msg.as_string())
+            smtp.sendmail(msg["From"], msg["To"], msg.as_string())
         except SMTPException as e:
             if logger:
                 logger("SMTP: \33[3;33mSendig email failed\33[0m %s" % str(e))
-            raise e
+            raise
         finally:
             smtp.close()
-    # enddef
-# endclass
 
 
 # Regular expression for check valid email address
-re_email = re.compile("^[\w\.\-]+@[\w\.\-]+$")
+re_email = re.compile(r"^[\w\.\-]+@[\w\.\-]+$")
 
 
 class Email:
     """Class for automatic checking email address."""
     def __init__(self, value):
         if not Email.check(value):
-            raise RuntimeError("%s not match as email" % value)
+            raise RuntimeError("{value} not match as email")
         self.value = value
 
     def __str__(self):
@@ -197,5 +184,4 @@ class Email:
     @staticmethod
     def check(value):
         """Return True if value could be valid email address."""
-        return True if re_email.match(value) else False
-# enddef
+        return bool(re_email.match(value))

@@ -1,10 +1,10 @@
 """Support library for auto convert or check types."""
 
 from json import JSONEncoder
-from sys import version_info
+
 
 def nstr(val):
-    """Return None or unicode."""
+    """Return None or string."""
     if val is None:
         return None
     return str(val)
@@ -27,9 +27,9 @@ def isnumber(obj):
     return isinstance(obj, (float, int))
 
 
-def uniq(l):
-    """Return list without duplication."""
-    return list(set(l))
+def uniq(lst):
+    """Return list without duplicates."""
+    return list(set(lst))
 
 
 def dict_difference(one, two):
@@ -38,14 +38,14 @@ def dict_difference(one, two):
     """
     class NotFound:
         pass
-    rv = dict()
+    rv = {}
     for key, val in one.items():
         if val != two.get(key, NotFound()):
             rv[key] = val
     return rv
 
 
-class Object(object):
+class Object:
     """ Simple object with __contains__ method, so 'prop' in obj will work """
     def __init__(self, **kwargs):
         """Set keyword arguments as object properties."""
@@ -61,7 +61,7 @@ class Object(object):
         This method was be called by ObjectEncoder.
         """
         rv = self.__dict__.copy()
-        rv['__class__'] = self.__class__.__name__
+        rv["__class__"] = self.__class__.__name__
         return rv
 
 
@@ -81,7 +81,7 @@ class Size(object):
         Size must be set in text as WIDTHxHEIGHT
     """
     def __init__(self, text):
-        self.width, self.height = tuple(int(x) for x in text.split('x'))
+        self.width, self.height = tuple(int(x) for x in text.split("x"))
 
     def __str__(self):
         return "%dx%d" % (self.width, self.height)
@@ -95,10 +95,10 @@ class Paths(list):
     """Paths object parse string and split it with colon character."""
     def __init__(self, value):
         if value:
-            super(Paths, self).__init__(
-                it.strip() for it in value.split(':'))
+            super().__init__(
+                it.strip() for it in value.split(":"))
         else:
-            super(Paths, self).__init__()
+            super().__init__()
 
     def __str__(self):
-        return ':'.join(self)
+        return ":".join(self)

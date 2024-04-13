@@ -15,15 +15,15 @@ ERROR:root:SQL: SELECT 1 WHERE 1 = 1 LIMIT 1
 ERROR:root:SQL: calling rollback()
 """
 
-import MySQLdb.cursors as cursors
-from MySQLdb.connections import Connection
-
 import re
 
-from util import islistable, isnumber
+from pymysql import cursors
+from pymysql.connections import Connection
+
+from .util import islistable, isnumber
 
 
-class BaseCursor(cursors.BaseCursor):
+class BaseCursor(cursors.Cursor):
     """
     BaseCursor extendet with tosql method, which covert types
     automatics to sql.
@@ -32,7 +32,7 @@ class BaseCursor(cursors.BaseCursor):
     """
 
     def __init__(self, connection):
-        cursors.BaseCursor.__init__(self, connection)
+        super().__init__(connection)
         self.logger = None
 
     def tosql(self, arg, charset):
@@ -41,16 +41,15 @@ class BaseCursor(cursors.BaseCursor):
             arg = "NULL"
         elif isnumber(arg):                                 # float, int, long
             pass
-        elif isinstance(arg, str) or isinstance(arg, unicode):  # str
-            if isinstance(arg, unicode):
-                arg = arg.encode(charset)
+        elif isinstance(arg, str):  # str
             arg = "'%s'" % self.connection.escape_string(arg)
         elif isinstance(arg, bool):                         # bool
             arg = 1 if arg else 0
         elif islistable(arg):                               # list, tuple, set
-            arg = '(' + ','.join(self.tosql(a, charset) for a in arg) + ')'
+            arg = "(" + ",".join(self.tosql(a, charset) for a in arg) + ")"
         else:                                               #
-            raise TypeError('Unsuported type')
+            msg = "Unsuported type"
+            raise TypeError(msg)
         return arg
 
     def execute(self, query, args=()):
@@ -62,7 +61,7 @@ class BaseCursor(cursors.BaseCursor):
         db = self._get_db()
         charset = db.character_set_name()
 
-        if isinstance(args, tuple) or isinstance(args, list):
+        if isinstance(args, (list, tuple)):
             _args = []
             for arg in args:
                 _args.append(self.tosql(arg, charset))
@@ -73,11 +72,11 @@ class BaseCursor(cursors.BaseCursor):
         sql = query % args
         if self.logger is not None:
             self.logger("SQL: \33[0;32m%s\33[0m" % sql)
-        return cursors.BaseCursor.execute(self, sql)
+        return super().execute(sql)
 
     def unlock_tables(self):
         """Call unlock tables."""
-        self.execute('UNLOCK TABLES')
+        self.execute("UNLOCK TABLES")
 
 
 class Cursor(BaseCursor, cursors.Cursor):
@@ -125,14 +124,14 @@ class Transaction():
         """Commit transaction and log it when logger was set."""
         self.commited = True
         if self.logger is not None:
-            self.logger('SQL: \33[3;34mcalling commit()\33[0m')
+            self.logger("SQL: \33[3;34mcalling commit()\33[0m")
         return self.conn.commit()
 
     def rollback(self):
         """Rollback transaction and log it when logger was set."""
         self.commited = False
         if self.logger is not None:
-            self.logger('SQL: \33[3;33mcalling rollback()\33[0m')
+            self.logger("SQL: \33[3;33mcalling rollback()\33[0m")
         return self.conn.rollback()
 
     def __del__(self):
@@ -156,19 +155,20 @@ def __init__(self, dsn):
     """__init__ method for Sql object."""
     match = re_dsn.match(dsn)
     if not match:
-        raise RuntimeError("Bad MySQL Data Source Name `%s`", dsn)
+        msg = "Bad MySQL Data Source Name `%s`"
+        raise RuntimeError(msg, dsn)
 
     self.kwargs = {
-        'host':     match.group('host') or "localhost",
-        'port':     int(match.group('port') or 3306),
-        'db':       match.group('db'),
-        'charset':  match.group('charset') or "utf8",
-        'user':     match.group('user')
+        "host":     match.group("host") or "localhost",
+        "port":     int(match.group("port") or 3306),
+        "db":       match.group("db"),
+        "charset":  match.group("charset") or "utf8",
+        "user":     match.group("user"),
     }
 
-    passwd = match.group('passwd')
+    passwd = match.group("passwd")
     if passwd:
-        self.kwargs['passwd'] = passwd
+        self.kwargs["passwd"] = passwd
     self.connection = None
 
 
@@ -178,6 +178,7 @@ def connect(self):
         return self.connection
 
     self.connection = Connection(**self.kwargs)
+    return None
 
 
 def close(self):
@@ -193,6 +194,6 @@ def transaction(self, **kwargs):
 
 def __str__(self):
     return "mysql://%s:%s@%s:%d/%s::%s" % \
-        (self.kwargs['user'], self.kwargs.get('passwd', ''),
-         self.kwargs['host'], self.kwargs['port'], self.kwargs['db'],
-         self.kwargs['charset'])
+        (self.kwargs["user"], self.kwargs.get("passwd", ""),
+         self.kwargs["host"], self.kwargs["port"], self.kwargs["db"],
+         self.kwargs["charset"])
