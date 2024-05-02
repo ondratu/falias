@@ -30,6 +30,13 @@ def dsn_host(request):
 
 
 @fixture(params=DSNS)
+def dsn_tls(request):
+    obj = request.param.copy()
+    obj["dsn"] = "smtps://{host}/".format(**obj)
+    return obj
+
+
+@fixture(params=DSNS)
 def dsn_port(request):
     obj = request.param.copy()
     if obj["port"] != 25:
@@ -65,6 +72,11 @@ class TestParse:
     def test_url(self, dsn_host):
         smtp = Smtp(dsn_host["dsn"])
         assert smtp.host == dsn_host["host"]
+
+    def test_tls(self, dsn_tls):
+        smtp = Smtp(dsn_tls["dsn"])
+        assert smtp.protocol == "smtps"
+        assert smtp.host == dsn_tls["host"]
 
     def test_port(self, dsn_port):
         smtp = Smtp(dsn_port["dsn"])

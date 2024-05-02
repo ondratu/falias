@@ -28,4 +28,4 @@ falias.parser
 __all__ = ["mysql", "sqlite", "sql", "security", "util", "smtp", "parser"]
 
 __date__ = "20 Apr 2024"
-__version__ = "0.2.1"
+__version__ = "0.2.2dev0"
